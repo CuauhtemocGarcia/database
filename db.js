@@ -18,3 +18,5 @@ conn.connect((err) =>{
         console.log("CONNECTION WITH MYSQL DATABASE CREATED SUCCESSFULLY.");
     }
 });
+
+module.exports = conn;
