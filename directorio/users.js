@@ -56,4 +56,46 @@ const listuserbyid = async(req = request, res = response) =>{
     }
 }
 
-module.exports = {listusers, listuserbyid};
+const addUser = async(req = request, res = response) =>{
+    
+
+    const {
+        username,
+        email,
+        password,
+        name,
+        last_name,
+        phonenumber = ``,
+        road_id,
+        is_active = 1
+
+    } = req.body;
+
+
+    if (!username || !email || !password || !name || !last_name || !road_id){
+        res.status(400).json({msg: 'Missing Information'});
+        return;
+    }
+
+    const user = [username, email, password, name, last_name, phonenumber, road_id, is_active]
+
+    let conn;
+
+
+    try{
+        conn = await pool.getConnection();
+
+        const useradded = await conn.query(usersModel.addrow, [...user], (err) =>{
+            if (err) throw err;
+        })
+        console.log(useradded);
+        res.json(useradded);
+    }catch(error){
+        console.log(error);
+        res.status(500).json(error);
+    }finally{
+        if(conn) conn.end();
+    }
+}
+
+module.exports = {listusers, listuserbyid, addUser};
