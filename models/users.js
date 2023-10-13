@@ -27,6 +27,22 @@ const usersModel = {
 
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
+    getByusername:`
+    SELECT 
+         id
+     FROM
+     Users
+     WHERE
+     username= ?
+    `,
+    getByemail:`
+    SELECT
+        id
+    FROM
+        Users
+    WHERE
+       email= ?
+    `,
 }
 
 module.exports = usersModel;

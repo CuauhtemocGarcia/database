@@ -83,13 +83,39 @@ const addUser = async(req = request, res = response) =>{
 
 
     try{
+
         conn = await pool.getConnection();
 
-        const useradded = await conn.query(usersModel.addrow, [...user], (err) =>{
+        const [usernameuser] = await conn.query(
+            usersModel.getByusername,
+            [username],
+            (err) => {if (err) throw err;}
+        );
+        if (usernameuser){
+            res.status(400).json({msg: `User with username ${username} already exists`});
+            return;
+        }
+      
+
+        const [emailuser] = await conn.query(
+            usersModel.getByemail,
+            [email],
+            (err) => {if (err) throw err;}
+        );
+        if (emailuser){
+            res.status(400).json({msg: `User with email ${email} already exists`});
+            return;
+        }
+
+        const useradded = await conn.query(usersModel.addrow, 
+            [...user], (err) =>{
             if (err) throw err;
         })
-        console.log(useradded);
-        res.json(useradded);
+
+        
+
+        if (useradded.affectedRows == 0) throw new Error({message: 'Failed to add user'});
+        res.json({msg: 'user added succesfully'});
     }catch(error){
         console.log(error);
         res.status(500).json(error);
