@@ -1,4 +1,5 @@
 const {request, response} = require('express');
+const bcrypt = require('bcrypt');
 const usersModel = require('../models/users');
 const pool = require('../db');
 
@@ -76,8 +77,11 @@ const addUser = async(req = request, res = response) =>{
         res.status(400).json({msg: 'Missing Information'});
         return;
     }
+    
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    const user = [username, email, password, name, last_name, phonenumber, road_id, is_active]
+    const user = [username, email, passwordHash, name, last_name, phonenumber, road_id, is_active]
 
     let conn;
 
@@ -125,7 +129,7 @@ const addUser = async(req = request, res = response) =>{
 
 }
 
-//Mi modificacion//18-10-2023
+/*/Mi modificacion//18-10-2023
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
@@ -167,7 +171,7 @@ const updateUser = async (req, res) => {
       }
   
       // Realizacion de cambios
-      const allowedFields = ['username', 'email', 'password', 'name', 'last_name', 'phonenumber', 'is_active'];
+      const allowedFields = ['username', 'email', 'password', 'name', 'last_name', 'phonenumber', 'road_id', 'is_active'];
       const updateData = {};
   
       allowedFields.forEach((field) => {
@@ -190,6 +194,7 @@ const updateUser = async (req, res) => {
           updateData.name,
           updateData.last_name,
           updateData.phonenumber,
+          updateData.road_id,
           updateData.is_active,
           id
         ]
@@ -208,7 +213,99 @@ const updateUser = async (req, res) => {
     }
   };
   
-  //HASTA AQUI MI TERMINACION.//
+  //HASTA AQUI MI TERMINACION./*/
+//UPDATEUSERS//
+const updateUser = async (req, res)=>{
+  const {
+      username,
+      email,
+      password,
+      name,
+      last_name,
+      phonenumber,
+      road_id,
+      is_active ,
+  } = req.body;
+
+const {id} = req.params;
+let newUserData=[
+  username,
+  email,
+  password,
+  name,
+  last_name,
+  phonenumber,
+  road_id,
+  is_active   
+];
+let conn;
+try{
+  conn = await pool.getConnection();
+const [userExists] = await conn.query(
+  usersModel.getbyid,
+  [id],
+  (err) => {if (err) throw err;}
+);
+if (!userExists || userExists.id_active === 0){
+  res.status(404).json({msg:'User not found'});
+  return;
+}
+//24-10-2023//
+const [usernameUser] = await conn.query(
+  usersModel.getByusername,
+  [username],
+  (err) => {if (err) throw err;}
+);
+if (usernameUser){
+  res.status(409).json({msg:`User with username ${username} already exists`});
+  return;
+}
+
+const [emailUsers] = await conn.query(
+  usersModel.getByemail,
+  [email],
+  (err)=>{if (err) throw err;}
+);
+if (emailUsers) {
+  res.status(409).json({msg: `USER WHTH EMAIL ${email} already exists`});
+  return;
+}
+
+
+const oldUserData = [
+  userExists.username,
+  userExists.email,
+  userExists.password,
+  userExists.name,
+  userExists.last_name,
+  userExists.phonenumber,
+  userExists.road_id,
+  userExists.is_active  
+];
+
+newUserData.forEach((userData, index)=> {
+  if (!userData){
+      newUserData[index] = oldUserData[index];
+  }
+})
+
+const userUpdate = await conn.query(
+  usersModel.updateUser,
+  [...newUserData, id],
+  (err) => {if (err) throw err;}
+);
+if(userUpdate.affecteRows === 0){
+  throw new Error ('User not updated');
+}
+res.json({msg:'User updated successfully'})
+}catch (error){
+      console.log(error);
+      res.status(500).json(error);
+  } finally{
+      if (conn) conn.end();
+  }
+};
+//termina aqui
 
 const deleteuser = async(req = request, res = response) =>{
     let conn;

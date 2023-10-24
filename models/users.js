@@ -53,6 +53,7 @@ const usersModel = {
              name = ?,
              last_name = ?,
              phonenumber = ?,
+             road_id = ?,
              is_active = ?
          WHERE
              id = ?
