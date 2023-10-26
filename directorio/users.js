@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const usersModel = require('../models/users');
 const pool = require('../db');
 
+//EDPOINT MOSTRAR LISTAS
 const listusers = async(req = request, res = response) =>{
     let conn;
     
@@ -25,6 +26,7 @@ const listusers = async(req = request, res = response) =>{
     
 }
 
+//EDPOINT LISTAS DE USUARIOS
 const listuserbyid = async(req = request, res = response) =>{
     const {id} = req.params;
     if(isNaN(id)){
@@ -57,6 +59,7 @@ const listuserbyid = async(req = request, res = response) =>{
     }
 }
 
+//EDPOINT AGREGAR USUARIO
 const addUser = async(req = request, res = response) =>{
     
 
@@ -129,7 +132,7 @@ const addUser = async(req = request, res = response) =>{
 
 }
 
-/*/Mi modificacion//18-10-2023
+/*/ACTUALIZAR USUARIO CODIGO//
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
@@ -213,8 +216,10 @@ const updateUser = async (req, res) => {
     }
   };
   
-  //HASTA AQUI MI TERMINACION./*/
-//UPDATEUSERS//
+  //TERMINA EL CODIGO./*/
+
+  //EDPOINT ACTUALIZAR USUARIO
+//UPDATEUSERS CODIGO DE CLASE//
 const updateUser = async (req, res)=>{
   const {
       username,
@@ -307,6 +312,7 @@ res.json({msg:'User updated successfully'})
 };
 //termina aqui
 
+//EDPOINT ELMINACIOM
 const deleteuser = async(req = request, res = response) =>{
     let conn;
     const {id} = req.params;
@@ -344,4 +350,53 @@ const deleteuser = async(req = request, res = response) =>{
         if (conn) conn.end();
     }
 }
-module.exports = {listusers, listuserbyid, addUser, deleteuser, updateUser};
+
+const signinUser = async (req = request, res = response) =>{
+  const {username, password} = req.body;
+
+  let conn;
+
+  if (!username || !password){
+    res.status(400).json({msg: 'username and password are required'});
+    return;
+  }
+
+  try{
+    conn = await pool.getConnection();
+
+    const [user] = await  conn.query(
+      usersModel.getByusername,
+      [username],
+      (err) => {throw err;}
+    );
+    if (!user || user.is_active == 0){
+      res.status(404).json({msg: 'wrong username or password'});
+      return;
+    }
+
+    const passwordOk = bcrypt.compare(password, user.password);
+    if (!passwordOk){
+      res.status(404).json({msg: 'wrong username or password'});
+      return;
+    }
+    delete user.password;
+    delete user.created_at;
+    delete user.updated_at;
+    res.json(user);
+
+
+  }catch(error){
+    console.log(error);
+    res.status(500).json(error);
+  }finally{
+    if (conn) conn.end();
+  }
+}
+
+module.exports = {
+  listusers, 
+  listuserbyid, 
+  addUser, 
+  deleteuser, 
+  updateUser, 
+signinUser};
