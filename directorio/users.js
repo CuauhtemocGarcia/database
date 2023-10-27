@@ -74,6 +74,7 @@ const addUser = async(req = request, res = response) =>{
         is_active = 1
 
     } = req.body;
+    
 
 
     if (!username || !email || !password || !name || !last_name || !road_id){
@@ -81,8 +82,11 @@ const addUser = async(req = request, res = response) =>{
         return;
     }
     
+    let passwordHash
+    if (password){
     const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    passwordHash = await bcrypt.hash(password, saltRounds);
+    }
 
     const user = [username, email, passwordHash, name, last_name, phonenumber, road_id, is_active]
 
